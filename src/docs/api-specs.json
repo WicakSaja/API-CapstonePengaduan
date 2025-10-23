@@ -1,0 +1,2371 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Sistem Pengaduan Masyarakat",
+    "version": "1.0.0",
+    "description": "Dokumentasi API lengkap untuk Sistem Pelayanan Pengaduan Masyarakat berbasis web."
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "AUTH",
+      "description": "Autentikasi & Profil Pengguna"
+    },
+    {
+      "name": "MASTER ADMIN (Manajemen Akun)",
+      "description": "Endpoint khusus Master Admin untuk mengelola akun Admin"
+    },
+    {
+      "name": "PENGADUAN (Masyarakat)",
+      "description": "Endpoint yang digunakan masyarakat untuk mengelola pengaduan mereka"
+    },
+    {
+      "name": "ADMIN (Manajemen Pengaduan)",
+      "description": "Endpoint yang digunakan Admin untuk mengelola semua pengaduan"
+    },
+    {
+      "name": "MASTER ADMIN (Manajemen Pengaduan)",
+      "description": "Endpoint khusus Master Admin untuk approval pengaduan"
+    },
+    {
+      "name": "FILE HANDLING",
+      "description": "Upload dan download file lampiran"
+    },
+    {
+      "name": "KATEGORI",
+      "description": "Endpoint publik dan admin untuk mengelola kategori pengaduan"
+    },
+    {
+      "name": "DASHBOARD",
+      "description": "Endpoint untuk statistik dan rekapitulasi data"
+    },
+    {
+      "name": "NOTIFIKASI",
+      "description": "Endpoint untuk mengelola notifikasi pengguna"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Registrasi akun masyarakat baru",
+        "description": "Digunakan oleh masyarakat untuk mendaftarkan akun baru.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "nama_lengkap": "Budi Santoso",
+                "nik": "3573012345678900",
+                "no_hp": "081234567890",
+                "alamat": "Jl. Merdeka No. 10, Malang",
+                "username": "budisantoso",
+                "password": "PasswordSangatKuat123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registrasi berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "message": "Registrasi berhasil",
+                  "data": {
+                    "id": 12,
+                    "nama_lengkap": "Budi Santoso",
+                    "username": "budisantoso",
+                    "role": "masyarakat",
+                    "created_at": "2025-10-22T10:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Registrasi gagal (Validasi error atau NIK/Username sudah ada)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Registrasi gagal",
+                  "errors": [
+                    "NIK sudah terdaftar.",
+                    "Username sudah digunakan."
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Login untuk semua peran",
+        "description": "Endpoint untuk login semua peran (Masyarakat, Admin, Master Admin).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "username": "budisantoso",
+                "password": "PasswordSangatKuat123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "message": "Login berhasil",
+                  "data": {
+                    "token": "jwt.access.token.string",
+                    "refresh_token": "jwt.refresh.token.string",
+                    "user": {
+                      "id": 12,
+                      "nama_lengkap": "Budi Santoso",
+                      "username": "budisantoso",
+                      "role": "masyarakat"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Username atau password salah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Username atau password salah"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Logout (invalidasi token)",
+        "description": "Endpoint untuk logout (menghapus/membatalkan token).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "message": "Logout berhasil"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Token tidak valid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh-token": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Memperbarui access token",
+        "description": "Memperbarui access token menggunakan refresh token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "refresh_token"
+                ]
+              },
+              "example": {
+                "refresh_token": "jwt.refresh.token.string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Token berhasil diperbarui",
+                  "data": {
+                    "token": "jwt.access.token.string.baru"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token tidak valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Refresh token tidak valid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Memulai proses reset password",
+        "description": "Memulai proses reset password (misal: mengirim email).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username_or_email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username_or_email"
+                ]
+              },
+              "example": {
+                "username_or_email": "budisantoso"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Instruksi reset password telah dikirim",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Instruksi reset password telah dikirim"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Menyelesaikan reset password",
+        "description": "Menyelesaikan proses reset password dengan token reset.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              },
+              "example": {
+                "reset_token": "token_unik_dari_email",
+                "new_password": "PasswordBaruSangatKuat456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password berhasil direset",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Password berhasil direset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token reset tidak valid atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Token reset tidak valid atau kedaluwarsa"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Mengambil profil pengguna saat ini",
+        "description": "Mengambil data profil pengguna yang sedang login.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil data profil",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil data profil",
+                  "data": {
+                    "id": 12,
+                    "nama_lengkap": "Budi Santoso",
+                    "username": "budisantoso",
+                    "role": "masyarakat",
+                    "nik": "3573012345678900",
+                    "no_hp": "081234567890",
+                    "alamat": "Jl. Merdeka No. 10, Malang"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Memperbarui profil pengguna saat ini",
+        "description": "Memperbarui data profil pengguna yang sedang login (data non-sensitif).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              },
+              "example": {
+                "nama_lengkap": "Budi Santoso W.",
+                "no_hp": "081234567899",
+                "alamat": "Jl. Merdeka No. 11, Malang"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Profil berhasil diperbarui",
+                  "data": {
+                    "id": 12,
+                    "nama_lengkap": "Budi Santoso W.",
+                    "username": "budisantoso",
+                    "role": "masyarakat",
+                    "nik": "3573012345678900",
+                    "no_hp": "081234567899",
+                    "alamat": "Jl. Merdeka No. 11, Malang"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "put": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "Mengubah password pengguna saat ini",
+        "description": "Mengubah password pengguna yang sedang login.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              },
+              "example": {
+                "current_password": "PasswordSangatKuat123",
+                "new_password": "PasswordSangatKuat456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password berhasil diubah",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Password berhasil diubah"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Password lama tidak sesuai",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Password lama tidak sesuai"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/master/admin": {
+      "get": {
+        "tags": [
+          "MASTER ADMIN (Manajemen Akun)"
+        ],
+        "summary": "Mendapatkan daftar semua akun Admin",
+        "description": "Hanya bisa diakses oleh Master Admin untuk menampilkan list akun Admin yang terdaftar.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil data admin",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil data admin",
+                  "data": [
+                    {
+                      "id": 2,
+                      "nama_lengkap": "Admin Kelurahan A",
+                      "username": "admin_a",
+                      "role": "admin",
+                      "created_at": "2025-10-20T09:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "MASTER ADMIN (Manajemen Akun)"
+        ],
+        "summary": "Membuat akun Admin baru",
+        "description": "Endpoint khusus yang hanya bisa diakses oleh Master Admin untuk membuatkan akun Admin baru.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdminRequest"
+              },
+              "example": {
+                "nama_lengkap": "Admin Kelurahan C",
+                "username": "admin_c",
+                "password": "PasswordAdminBaru123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Akun admin berhasil dibuat",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Akun admin berhasil dibuat",
+                  "data": {
+                    "id": 4,
+                    "nama_lengkap": "Admin Kelurahan C",
+                    "username": "admin_c",
+                    "role": "admin",
+                    "created_at": "2025-10-22T11:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Gagal membuat akun (Misal: Username sudah ada)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Gagal membuat akun",
+                  "errors": [
+                    "Username 'admin_c' sudah digunakan."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/master/admin/{id}": {
+      "put": {
+        "tags": [
+          "MASTER ADMIN (Manajemen Akun)"
+        ],
+        "summary": "Memperbarui akun Admin",
+        "description": "Memperbarui data akun Admin (misal: mereset password atau mengubah nama).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID dari akun admin yang akan diperbarui"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminRequest"
+              },
+              "example": {
+                "nama_lengkap": "Admin Kelurahan C (Baru)",
+                "username": "admin_c_new"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Akun admin berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Akun admin berhasil diperbarui",
+                  "data": {
+                    "id": 4,
+                    "nama_lengkap": "Admin Kelurahan C (Baru)",
+                    "username": "admin_c_new",
+                    "role": "admin",
+                    "created_at": "2025-10-22T11:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Akun admin tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Akun admin tidak ditemukan"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "MASTER ADMIN (Manajemen Akun)"
+        ],
+        "summary": "Menghapus akun Admin",
+        "description": "Hanya bisa diakses oleh Master Admin untuk menghapus akun Admin.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID dari akun admin yang akan dihapus"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Akun admin berhasil dihapus",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Akun admin berhasil dihapus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Akun admin tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Akun admin tidak ditemukan"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/pengaduan": {
+      "post": {
+        "tags": [
+          "PENGADUAN (Masyarakat)"
+        ],
+        "summary": "Mengirim form pengaduan baru",
+        "description": "Masyarakat mengirimkan form pengaduan baru (tanpa lampiran). Lampiran di-upload terpisah.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePengaduanRequest"
+              },
+              "example": {
+                "kategori_id": 1,
+                "judul": "Jalan Rusak di Depan Balai RW",
+                "deskripsi": "Aspal jalan berlubang besar...",
+                "lokasi": "Jl. Merdeka, depan Balai RW 05"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pengaduan berhasil dikirim",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Pengaduan berhasil dikirim",
+                  "data": {
+                    "id": 101,
+                    "user_id": 12,
+                    "kategori_id": 1,
+                    "judul": "Jalan Rusak di Depan Balai RW",
+                    "deskripsi": "Aspal jalan berlubang besar...",
+                    "lokasi": "Jl. Merdeka, depan Balai RW 05",
+                    "status": "pending",
+                    "created_at": "2025-10-22T11:15:00.000Z",
+                    "updated_at": "2025-10-22T11:15:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (Misal: Kategori tidak valid)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/pengaduan/saya": {
+      "get": {
+        "tags": [
+          "PENGADUAN (Masyarakat)"
+        ],
+        "summary": "Melihat riwayat pengaduan saya",
+        "description": "Masyarakat melihat daftar riwayat pengaduan milik mereka.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil riwayat pengaduan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil riwayat pengaduan",
+                  "data": [
+                    {
+                      "id": 101,
+                      "judul": "Jalan Rusak di Depan Balai RW",
+                      "status": "pending",
+                      "created_at": "2025-10-22T11:15:00.000Z"
+                    },
+                    {
+                      "id": 98,
+                      "judul": "Lampu Jalan Mati",
+                      "status": "selesai",
+                      "created_at": "2025-10-18T08:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/pengaduan/saya/{id}": {
+      "get": {
+        "tags": [
+          "PENGADUAN (Masyarakat)"
+        ],
+        "summary": "Melihat detail pengaduan saya",
+        "description": "Masyarakat melihat detail spesifik dari satu pengaduan milik mereka.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil detail pengaduan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PengaduanDetailResponse"
+                },
+                "example": {
+                  "message": "Berhasil mengambil detail pengaduan",
+                  "data": {
+                    "id": 98,
+                    "judul": "Lampu Jalan Mati",
+                    "deskripsi": "Lampu PJU di gang 3 mati total sudah 2 hari.",
+                    "lokasi": "Gang 3, RT 01 RW 02",
+                    "status": "selesai",
+                    "created_at": "2025-10-18T08:00:00.000Z",
+                    "lampiran": [
+                      {
+                        "id": 1,
+                        "file_name": "FOTO_LAMPU_MATI.jpg"
+                      }
+                    ],
+                    "tanggapan": [
+                      {
+                        "id": 1,
+                        "oleh": "Admin Kelurahan A",
+                        "tindakan": "validasi",
+                        "status_baru": "proses",
+                        "catatan": "Laporan valid, diteruskan ke tim teknisi.",
+                        "created_at": "2025-10-18T09:30:00.000Z"
+                      },
+                      {
+                        "id": 2,
+                        "oleh": "Admin Kelurahan A",
+                        "tindakan": "penyelesaian",
+                        "status_baru": "selesai",
+                        "catatan": "Lampu sudah diperbaiki oleh teknisi.",
+                        "created_at": "2025-10-19T14:00:00.000Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden (Jika pengaduan bukan milik user)"
+          },
+          "404": {
+            "description": "Not Found (Jika pengaduan tidak ada)"
+          }
+        }
+      }
+    },
+    "/pengaduan/{id}/tanggapan": {
+      "get": {
+        "tags": [
+          "PENGADUAN (Masyarakat)",
+          "ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Mendapatkan riwayat tanggapan pengaduan",
+        "description": "Mengambil daftar lengkap riwayat tanggapan/respon untuk satu pengaduan.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil riwayat tanggapan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil riwayat tanggapan",
+                  "data": [
+                    {
+                      "id": 1,
+                      "oleh": "Admin Kelurahan A",
+                      "tindakan": "validasi",
+                      "status_baru": "proses",
+                      "catatan": "Laporan valid, diteruskan ke tim teknisi.",
+                      "created_at": "2025-10-18T09:30:00.000Z"
+                    },
+                    {
+                      "id": 2,
+                      "oleh": "Admin Kelurahan A",
+                      "tindakan": "komentar",
+                      "status_baru": null,
+                      "catatan": "Mohon ditunggu, teknisi sedang menuju lokasi.",
+                      "created_at": "2025-10-18T10:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/pengaduan": {
+      "get": {
+        "tags": [
+          "ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Melihat semua daftar pengaduan",
+        "description": "Admin melihat semua daftar pengaduan yang masuk.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "proses",
+                "disetujui",
+                "selesai",
+                "ditolak"
+              ]
+            },
+            "description": "Filter berdasarkan status"
+          },
+          {
+            "name": "kategori_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filter berdasarkan kategori"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil semua pengaduan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil semua pengaduan",
+                  "data": [
+                    {
+                      "id": 101,
+                      "judul": "Jalan Rusak di Depan Balai RW",
+                      "pelapor": "Budi Santoso",
+                      "status": "pending",
+                      "created_at": "2025-10-22T11:15:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/pengaduan/{id}": {
+      "get": {
+        "tags": [
+          "ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Melihat detail pengaduan (untuk validasi)",
+        "description": "Endpoint untuk Admin melihat detail spesifik satu pengaduan untuk divalidasi.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil detail pengaduan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PengaduanDetailResponse"
+                },
+                "example": {
+                  "message": "Berhasil mengambil detail pengaduan",
+                  "data": {
+                    "id": 101,
+                    "judul": "Jalan Rusak di Depan Balai RW",
+                    "status": "pending",
+                    "lampiran": [],
+                    "tanggapan": []
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/pengaduan/{id}/validasi": {
+      "patch": {
+        "tags": [
+          "ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Validasi pengaduan (Pending -> Proses/Ditolak)",
+        "description": "Admin bisa mengubah status dari 'pending' ke 'proses' (jika valid) atau 'pending' ke 'ditolak' (jika tidak valid).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "proses",
+                      "ditolak"
+                    ]
+                  },
+                  "catatan": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "catatan"
+                ]
+              },
+              "example": {
+                "status": "proses",
+                "catatan": "Laporan valid, diteruskan untuk ditinjau Master Admin."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status pengaduan berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Status pengaduan berhasil diperbarui",
+                  "data": {
+                    "id": 101,
+                    "status": "proses",
+                    "updated_at": "2025-10-22T11:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (Misal: status tidak valid, atau pengaduan tidak lagi 'pending')",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Gagal memvalidasi",
+                  "errors": [
+                    "Pengaduan ini tidak dalam status 'pending'."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Menyelesaikan pengaduan (Disetujui -> Selesai)",
+        "description": "Ketika status laporan 'disetujui', admin bisa mengubahnya menjadi 'selesai' dengan tambahan bukti (di-upload terpisah).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "catatan": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "catatan"
+                ]
+              },
+              "example": {
+                "catatan": "Tindak lanjut telah dilaksanakan. Jalan sudah diperbaiki."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pengaduan telah diselesaikan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Pengaduan telah diselesaikan",
+                  "data": {
+                    "id": 101,
+                    "status": "selesai",
+                    "updated_at": "2025-10-23T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (Misal: pengaduan belum 'disetujui')",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Gagal menyelesaikan",
+                  "errors": [
+                    "Pengaduan ini harus berstatus 'disetujui' sebelum bisa diselesaikan."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/pengaduan/{id}/tanggapan": {
+      "post": {
+        "tags": [
+          "ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Menambah komentar/respon (tanpa ubah status)",
+        "description": "Admin (atau Master Admin) menambahkan komentar/respon ke pengaduan tanpa mengubah status.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "catatan": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "catatan"
+                ]
+              },
+              "example": {
+                "catatan": "Tim teknisi dijadwalkan turun besok pagi."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tanggapan berhasil ditambahkan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Tanggapan berhasil ditambahkan",
+                  "data": {
+                    "id": 3,
+                    "oleh": "Admin Kelurahan A",
+                    "tindakan": "komentar",
+                    "status_baru": null,
+                    "catatan": "Tim teknisi dijadwalkan turun besok pagi.",
+                    "created_at": "2025-10-22T14:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/master/pengaduan/{id}/approval": {
+      "patch": {
+        "tags": [
+          "MASTER ADMIN (Manajemen Pengaduan)"
+        ],
+        "summary": "Approval pengaduan (Proses -> Disetujui/Ditolak)",
+        "description": "Endpoint khusus untuk Master Admin memberikan persetujuan (approval). Mengubah status dari 'proses' ke 'disetujui' atau 'proses' ke 'ditolak'.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "disetujui",
+                      "ditolak"
+                    ]
+                  },
+                  "catatan": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "catatan"
+                ]
+              },
+              "example": {
+                "status": "disetujui",
+                "catatan": "Disetujui untuk ditindaklanjuti. Anggaran tersedia."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status approval berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Status approval berhasil diperbarui",
+                  "data": {
+                    "id": 101,
+                    "status": "disetujui",
+                    "updated_at": "2025-10-22T14:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (Misal: pengaduan tidak dalam status 'proses')",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Gagal memberi approval",
+                  "errors": [
+                    "Pengaduan ini tidak dalam status 'proses'."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/pengaduan/{id}/lampiran": {
+      "post": {
+        "tags": [
+          "FILE HANDLING"
+        ],
+        "summary": "Upload file lampiran",
+        "description": "Meng-upload file lampiran untuk pengaduan yang sudah ada. Bisa dipanggil oleh Masyarakat (saat melapor) atau Admin (saat memberi bukti selesai).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lampiran berhasil di-upload",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Lampiran berhasil di-upload",
+                  "data": {
+                    "id": 3,
+                    "pengaduan_id": 101,
+                    "file_name": "image.jpg",
+                    "file_path": "/uploads/pengaduan_101/image_uuid.jpg",
+                    "uploaded_at": "2025-10-22T11:20:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File tidak ditemukan atau format tidak didukung",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "File tidak ditemukan atau format tidak didukung"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Pengaduan tidak ditemukan"
+          }
+        }
+      }
+    },
+    "/pengaduan/{id}/lampiran/{fileId}": {
+      "get": {
+        "tags": [
+          "FILE HANDLING"
+        ],
+        "summary": "Download file lampiran",
+        "description": "Mengunduh file lampiran spesifik.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID pengaduan"
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID lampiran"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File berhasil diambil",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "File lampiran tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "File lampiran tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kategori": {
+      "get": {
+        "tags": [
+          "KATEGORI"
+        ],
+        "summary": "Mengambil semua kategori (Publik)",
+        "description": "Mengambil daftar semua kategori yang tersedia (untuk form pengaduan).",
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil daftar kategori",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil daftar kategori",
+                  "data": [
+                    {
+                      "id": 1,
+                      "nama_kategori": "Infrastruktur",
+                      "deskripsi": "Laporan terkait jalan, jembatan, drainase, dll."
+                    },
+                    {
+                      "id": 2,
+                      "nama_kategori": "Kebersihan",
+                      "deskripsi": "Laporan terkait sampah, kebersihan lingkungan, dll."
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/kategori": {
+      "post": {
+        "tags": [
+          "KATEGORI"
+        ],
+        "summary": "Membuat kategori baru (Admin)",
+        "description": "Admin (dan Master Admin) menambahkan kategori pengaduan baru.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KategoriRequest"
+              },
+              "example": {
+                "nama_kategori": "Penerangan Jalan",
+                "deskripsi": "Laporan terkait lampu PJU yang mati atau rusak."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kategori baru berhasil ditambahkan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Kategori baru berhasil ditambahkan",
+                  "data": {
+                    "id": 4,
+                    "nama_kategori": "Penerangan Jalan",
+                    "deskripsi": "Laporan terkait lampu PJU yang mati atau rusak."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (Misal: Nama kategori sudah ada)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/kategori/{id}": {
+      "get": {
+        "tags": [
+          "KATEGORI"
+        ],
+        "summary": "Mengambil detail kategori (Admin)",
+        "description": "Admin mengambil detail satu kategori spesifik (misalnya, untuk halaman edit).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID kategori"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil detail kategori",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil detail kategori",
+                  "data": {
+                    "id": 1,
+                    "nama_kategori": "Infrastruktur",
+                    "deskripsi": "Laporan terkait jalan, jembatan, drainase, dll."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "KATEGORI"
+        ],
+        "summary": "Memperbarui kategori (Admin)",
+        "description": "Admin memperbarui data kategori yang sudah ada.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID kategori"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KategoriRequest"
+              },
+              "example": {
+                "nama_kategori": "Infrastruktur & Drainase",
+                "deskripsi": "Laporan terkait jalan, jembatan, dan saluran air."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kategori berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Kategori berhasil diperbarui",
+                  "data": {
+                    "id": 1,
+                    "nama_kategori": "Infrastruktur & Drainase",
+                    "deskripsi": "Laporan terkait jalan, jembatan, dan saluran air."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "KATEGORI"
+        ],
+        "summary": "Menghapus kategori (Admin)",
+        "description": "Admin menghapus data kategori dari sistem.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID kategori"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kategori berhasil dihapus",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Kategori berhasil dihapus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (Misal: Kategori masih digunakan)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Gagal menghapus",
+                  "errors": [
+                    "Kategori ini tidak dapat dihapus karena masih digunakan oleh pengaduan yang ada."
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/dashboard/statistik-laporan": {
+      "get": {
+        "tags": [
+          "DASHBOARD"
+        ],
+        "summary": "Statistik laporan (Admin)",
+        "description": "Mengambil data rekapitulasi jumlah total pengaduan berdasarkan setiap status.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil statistik laporan",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil statistik laporan",
+                  "data": {
+                    "total": 150,
+                    "pending": 25,
+                    "proses": 10,
+                    "disetujui": 5,
+                    "ditolak": 10,
+                    "selesai": 100
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/master/dashboard/statistik-sistem": {
+      "get": {
+        "tags": [
+          "DASHBOARD"
+        ],
+        "summary": "Statistik sistem (Master Admin)",
+        "description": "Mengambil data statistik keseluruhan sistem yang hanya bisa diakses Master Admin.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil statistik sistem",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil statistik sistem",
+                  "data": {
+                    "total_pengaduan": 150,
+                    "total_masyarakat": 340,
+                    "total_admin": 4
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/notifikasi": {
+      "get": {
+        "tags": [
+          "NOTIFIKASI"
+        ],
+        "summary": "Mengambil notifikasi",
+        "description": "Mengambil daftar notifikasi untuk pengguna yang sedang login (Masyarakat mendapat update status, Admin mendapat notifikasi laporan baru).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "unread",
+                "all"
+              ],
+              "default": "unread"
+            },
+            "description": "Filter notifikasi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil notifikasi (Contoh untuk Masyarakat)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Berhasil mengambil notifikasi",
+                  "data": [
+                    {
+                      "id": 501,
+                      "pengaduan_id": 101,
+                      "pesan": "Laporan Anda 'Jalan Rusak' telah diubah statusnya menjadi 'proses'.",
+                      "status_baca": false,
+                      "created_at": "2025-10-22T11:30:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/notifikasi/baca-semua": {
+      "post": {
+        "tags": [
+          "NOTIFIKASI"
+        ],
+        "summary": "Tandai semua notifikasi dibaca",
+        "description": "Menandai *semua* notifikasi yang belum dibaca milik pengguna sebagai 'sudah dibaca'.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semua notifikasi telah ditandai dibaca",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Semua notifikasi telah ditandai dibaca",
+                  "data": {
+                    "total_dibaca": 3
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/notifikasi/{id}/baca": {
+      "patch": {
+        "tags": [
+          "NOTIFIKASI"
+        ],
+        "summary": "Tandai notifikasi dibaca",
+        "description": "Menandai satu notifikasi spesifik sebagai 'sudah dibaca'.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID dari notifikasi yang akan ditandai"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifikasi telah ditandai dibaca",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Notifikasi telah ditandai dibaca",
+                  "data": {
+                    "id": 501,
+                    "pengaduan_id": 101,
+                    "pesan": "Laporan Anda 'Jalan Rusak' telah diubah statusnya menjadi 'proses'.",
+                    "status_baca": true,
+                    "created_at": "2025-10-22T11:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Notifikasi tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Notifikasi tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "nama_lengkap": {
+            "type": "string"
+          },
+          "nik": {
+            "type": "string"
+          },
+          "no_hp": {
+            "type": "string"
+          },
+          "alamat": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nama_lengkap",
+          "nik",
+          "no_hp",
+          "username",
+          "password"
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "reset_token": {
+            "type": "string"
+          },
+          "new_password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reset_token",
+          "new_password"
+        ]
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "nama_lengkap": {
+            "type": "string"
+          },
+          "no_hp": {
+            "type": "string"
+          },
+          "alamat": {
+            "type": "string"
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string"
+          },
+          "new_password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ]
+      },
+      "CreateAdminRequest": {
+        "type": "object",
+        "properties": {
+          "nama_lengkap": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nama_lengkap",
+          "username",
+          "password"
+        ]
+      },
+      "UpdateAdminRequest": {
+        "type": "object",
+        "properties": {
+          "nama_lengkap": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePengaduanRequest": {
+        "type": "object",
+        "properties": {
+          "kategori_id": {
+            "type": "integer"
+          },
+          "judul": {
+            "type": "string"
+          },
+          "deskripsi": {
+            "type": "string"
+          },
+          "lokasi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kategori_id",
+          "judul",
+          "deskripsi",
+          "lokasi"
+        ]
+      },
+      "KategoriRequest": {
+        "type": "object",
+        "properties": {
+          "nama_kategori": {
+            "type": "string"
+          },
+          "deskripsi": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nama_kategori"
+        ]
+      },
+      "PengaduanDetailResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "judul": {
+                "type": "string"
+              },
+              "deskripsi": {
+                "type": "string"
+              },
+              "lokasi": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lampiran": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "file_name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "tanggapan": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "oleh": {
+                      "type": "string"
+                    },
+                    "tindakan": {
+                      "type": "string"
+                    },
+                    "status_baru": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "catatan": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
