@@ -2,6 +2,7 @@ import prisma from '../utils/prisma.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
+import { sendWhatsApp } from "../utils/whatsapp.js";
 
 export const loginAdmin = async (username, password) => {
   const admin = await prisma.admin.findUnique({ where: { username } });
@@ -164,52 +165,73 @@ export const getComplaintDetails = async (id) => {
   });
 };
 export const verifikasiPengaduan = async (id, status) => {
-  return prisma.pengaduan.update({
+  // 1. Update Database
+  const updated = await prisma.pengaduan.update({
     where: { id: Number(id) },
-    data: {
-      status: status, 
-    },
+    data: { status: status },
+    include: { user: true }, // PENTING: Ambil data user untuk dapat no_hp
   });
+
+  // 2. Kirim Notifikasi WA
+  if (updated.user?.no_hp) {
+    let pesan = "";
+    if (status === "diterima") {
+      pesan = `Halo ${updated.user.nama_lengkap},\n\nLaporan Anda dengan judul *"${updated.judul}"* telah *DITERIMA* oleh admin dan sedang menunggu persetujuan pimpinan.\n\nTerima kasih - LaporPak`;
+    } else if (status === "ditolak") {
+      pesan = `Halo ${updated.user.nama_lengkap},\n\nMohon maaf, laporan Anda *"${updated.judul}"* telah *DITOLAK* oleh admin karena alasan tertentu.\n\nTerima kasih - LaporPak`;
+    }
+
+    if (pesan) {
+      sendWhatsApp(updated.user.no_hp, pesan);
+    }
+  }
+
+  return updated;
 };
 
 export const setujuiPengaduan = async (id, status) => {
-  const aduan = await prisma.pengaduan.findUnique({
+  // Validasi... (kode lama Anda)
+  const aduan = await prisma.pengaduan.findUnique({ where: { id: Number(id) } });
+  if (aduan?.status !== 'diterima' && aduan?.status !== 'diproses') {
+    throw new Error("Status tidak valid.");
+  }
+
+  // Update
+  const updated = await prisma.pengaduan.update({
     where: { id: Number(id) },
+    data: { status: status }, // status = 'dilaksanakan'
+    include: { user: true }, // Ambil no_hp
   });
 
-  if (aduan?.status !== 'diterima' && aduan?.status !== 'diproses') {
-    throw new Error(
-      "Hanya aduan yang sudah 'diterima' atau 'diproses' yang bisa disetujui."
-    );
+  // Kirim WA
+  if (updated.user?.no_hp) {
+    const pesan = `Kabar Baik! Laporan *"${updated.judul}"* telah *DISETUJUI* oleh Pimpinan dan tim teknisi akan segera meluncur ke lokasi untuk perbaikan.\n\nMohon ditunggu - LaporPak`;
+    sendWhatsApp(updated.user.no_hp, pesan);
   }
-  return prisma.pengaduan.update({
-    where: { id: Number(id) },
-    data: {
-      status: status, 
-    },
-  });
+
+  return updated;
 };
 export const selesaikanAduan = async (id) => {
-    
-    const aduan = await prisma.pengaduan.findUnique({
-        where: { id: Number(id) },
-        select: { status: true }
-    });
-
-
+    // Validasi... (kode lama Anda)
+    const aduan = await prisma.pengaduan.findUnique({ where: { id: Number(id) } });
     if (aduan?.status !== 'dilaksanakan') {
-        throw new Error(
-            `Aduan hanya bisa diselesaikan jika statusnya 'dilaksanakan'. Status saat ini: ${aduan?.status}`
-        );
+       throw new Error("Belum dilaksanakan.");
     }
 
-    // 3. Update status
-    return prisma.pengaduan.update({
+    // Update
+    const updated = await prisma.pengaduan.update({
         where: { id: Number(id) },
-        data: {
-            status: 'selesai', 
-        },
+        data: { status: 'selesai' },
+        include: { user: true } // Ambil no_hp
     });
+
+    // Kirim WA
+    if (updated.user?.no_hp) {
+        const pesan = `Selesai! Laporan Anda *"${updated.judul}"* telah dinyatakan *SELESAI*. Terima kasih telah berpartisipasi membangun lingkungan kita.\n\nSalam - LaporPak`;
+        sendWhatsApp(updated.user.no_hp, pesan);
+    }
+
+    return updated;
 };
 
 export const respondToComplaint = async (id, notes) => {

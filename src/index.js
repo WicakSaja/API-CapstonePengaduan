@@ -1,8 +1,9 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import fs from "fs"; // WAJIB ADA
-
+import fs from "fs"; 
+import dotenv from 'dotenv'
+dotenv.config();
 
 import authRoutes from "./routes/auth.js";
 import pengaduanRoutes from "./routes/pengaduan.js";
