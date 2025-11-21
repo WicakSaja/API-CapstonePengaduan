@@ -1,6 +1,7 @@
 import express from "express";
 import * as kategoriController from "../controllers/kategoriController.js";
 import prisma from "../utils/prisma.js";
+import { generateLaporanPDF } from "../controllers/pdfController.js";
 
 // Impor service Anda
 import {
@@ -332,6 +333,15 @@ router.get(
   authMiddleware,
   roleMiddleware(["master_admin"]),
   getSystemStatistics
+);
+
+// pdf 
+
+router.get(
+  "/pengaduan/:id/pdf",
+  authMiddleware,
+  roleMiddleware(["admin" , "master_admin" ,"pimpinan"]),
+  generateLaporanPDF
 );
 
 export default router;
