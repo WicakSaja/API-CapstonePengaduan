@@ -8,7 +8,7 @@ export const sendWhatsApp = async (target, message) => {
 
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
-    headers.append("Authorization", process.env.FONNTE_TOKEN || "ztVGqeLmiuiyLjZjt58X");
+    headers.append("Authorization", process.env.FONNTE_TOKEN || "token");
 
     const body = JSON.stringify({
       target: target,
