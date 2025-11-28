@@ -1,6 +1,7 @@
 import prisma from '../utils/prisma.js';
 import path from 'path';
 import fs from 'fs';
+import mime from "mime";
 
 export const uploadLampiran = async (req, res) => {
   try {
@@ -39,21 +40,46 @@ export const downloadLampiran = async (req, res) => {
       where: { id: parseInt(fileId) },
     });
 
-    if (!lampiran) {
-      return res.status(404).json({ message: 'Lampiran tidak ditemukan' });
-    }
+    if (!lampiran) return res.status(404).json({ message: "Lampiran tidak ditemukan" });
 
     const filePath = path.join(process.cwd(), lampiran.filePath);
+
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File tidak ditemukan di server' });
+      return res.status(404).json({ message: "File tidak ditemukan di server" });
     }
 
-    res.download(filePath);
-  } catch (error) {
-    console.error('Download error:', error);
-    res.status(500).json({
-      message: 'Gagal mengunduh lampiran',
-      error: error.message,
-    });
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    const contentType = mime.getType(filePath) || "application/octet-stream";
+
+    // === Streaming Mode untuk VIDEO dengan range ===
+    if (contentType.startsWith("video") && range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      const chunkSize = end - start + 1;
+      const file = fs.createReadStream(filePath, { start, end });
+
+      res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunkSize,
+        "Content-Type": contentType,
+      });
+
+      return file.pipe(res);
+    }
+
+    // === Jika bukan video, kirim biasa ===
+    res.setHeader("Content-Type", contentType);
+    return res.sendFile(filePath);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Gagal membuka file" });
   }
 };
+

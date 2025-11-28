@@ -28,7 +28,7 @@ app.get("/uploads/:filename", (req, res) => {
   const rawFilename = req.params.filename;
   const decodedFilename = decodeURIComponent(rawFilename); 
 
-  console.log("\n--- 🔍 DEBUG REQUEST GAMBAR ---");
+  console.log("\n--- DEBUG REQUEST GAMBAR ---");
   console.log("1. URL Request:", rawFilename);
   console.log("2. Nama File Asli:", decodedFilename);
 
@@ -36,7 +36,7 @@ app.get("/uploads/:filename", (req, res) => {
   const pathPublic = path.join(process.cwd(), "public", "uploads", decodedFilename);
   const existPublic = fs.existsSync(pathPublic);
   console.log(`3. Cek di Public: ${pathPublic}`);
-  console.log(`   > Status: ${existPublic ? "✅ ADA" : "❌ TIDAK ADA"}`);
+  console.log(`   > Status: ${existPublic ? " ADA" : " TIDAK ADA"}`);
 
   if (existPublic) {
     return res.sendFile(pathPublic);
@@ -44,7 +44,7 @@ app.get("/uploads/:filename", (req, res) => {
   const pathRoot = path.join(process.cwd(), "uploads", decodedFilename);
   const existRoot = fs.existsSync(pathRoot);
   console.log(`4. Cek di Root:   ${pathRoot}`);
-  console.log(`   > Status: ${existRoot ? "✅ ADA" : "❌ TIDAK ADA"}`);
+  console.log(`   > Status: ${existRoot ? " ADA" : " TIDAK ADA"}`);
 
   if (existRoot) {
     return res.sendFile(pathRoot);
@@ -57,7 +57,7 @@ app.get("/uploads/:filename", (req, res) => {
 
 
 app.use(express.static(path.join(process.cwd(), "public")));
-app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads"))); 
 
 app.use("/api/auth", authRoutes);
 app.use("/api/pengaduan", pengaduanRoutes);
@@ -69,7 +69,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifikasi", notifikasiRoutes);
 app.use("/api/pengumuman", pengumumanRoute);
 
-console.log("\n🔍 Registered Routes Loaded.");
+console.log("\n Registered Routes Loaded.");
 prisma.$connect().then(() => console.log(" Prisma connected successfully"));
 
 app.listen(config.port, () =>
