@@ -1,68 +1,122 @@
-import Admin from '../models/adminModel.js';
-import Pengaduan from '../models/pengaduanModel.js';
+import prisma from '../utils/prisma.js';
 
-// Mendapatkan daftar semua akun Admin
-export const getAllAdmins = async (req, res) => {
-    try {
-        const admins = await Admin.find();
-        res.status(200).json({ message: 'Berhasil mengambil data admin', data: admins });
-    } catch (error) {
-        res.status(500).json({ message: 'Gagal mengambil data admin', error: error.message });
-    }
+/**
+ * 🔥 Statistik Sistem → dipakai oleh Master Admin Dashboard
+ */
+export const getStatistikSistem = async (req, res) => {
+  try {
+    const total_users = await prisma.user.count();
+    const total_pengaduan = await prisma.pengaduan.count();
+    const active_admins = await prisma.admin.count();
+
+    res.status(200).json({
+      message: "Berhasil mengambil statistik sistem",
+      data: {
+        total_users,
+        total_pengaduan,
+        active_admins,
+      },
+    });
+  } catch (error) {
+    console.error("Statistik Sistem Error:", error);
+    res.status(500).json({
+      message: "Gagal memuat statistik sistem",
+      error: error.message,
+    });
+  }
 };
 
-// Membuat akun Admin baru
-export const createAdmin = async (req, res) => {
-    const { nama_lengkap, username, password } = req.body;
-    try {
-        const newAdmin = new Admin({ nama_lengkap, username, password });
-        await newAdmin.save();
-        res.status(201).json({ message: 'Akun admin berhasil dibuat', data: newAdmin });
-    } catch (error) {
-        res.status(400).json({ message: 'Gagal membuat akun', error: error.message });
-    }
+
+/**
+ * Statistik Pengaduan
+ */
+export const getStatistikPengaduan = async (req, res) => {
+  try {
+    const total = await prisma.pengaduan.count();
+    const pending = await prisma.pengaduan.count({ where: { status: "pending" } });
+    const proses = await prisma.pengaduan.count({ where: { status: "proses" } });
+    const selesai = await prisma.pengaduan.count({ where: { status: "selesai" } });
+    const ditolak = await prisma.pengaduan.count({ where: { status: "ditolak" } });
+
+    res.status(200).json({
+      message: "Berhasil mengambil statistik pengaduan",
+      data: { total, pending, proses, selesai, ditolak },
+    });
+  } catch (error) {
+    console.error("Statistik Pengaduan Error:", error);
+    res.status(500).json({
+      message: "Gagal memuat statistik pengaduan",
+      error: error.message,
+    });
+  }
 };
 
-// Memperbarui akun Admin
-export const updateAdmin = async (req, res) => {
-    const { id } = req.params;
-    const { nama_lengkap, username } = req.body;
-    try {
-        const updatedAdmin = await Admin.findByIdAndUpdate(id, { nama_lengkap, username }, { new: true });
-        if (!updatedAdmin) {
-            return res.status(404).json({ message: 'Akun admin tidak ditemukan' });
-        }
-        res.status(200).json({ message: 'Akun admin berhasil diperbarui', data: updatedAdmin });
-    } catch (error) {
-        res.status(400).json({ message: 'Gagal memperbarui akun', error: error.message });
-    }
+
+/**
+ * Daftar admin
+ */
+export const getDaftarAdmin = async (req, res) => {
+  try {
+    const admins = await prisma.admin.findMany();
+
+    res.status(200).json({
+      message: "Berhasil mengambil daftar admin",
+      data: admins,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil daftar admin",
+      error: error.message,
+    });
+  }
 };
 
-// Menghapus akun Admin
-export const deleteAdmin = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const deletedAdmin = await Admin.findByIdAndDelete(id);
-        if (!deletedAdmin) {
-            return res.status(404).json({ message: 'Akun admin tidak ditemukan' });
-        }
-        res.status(200).json({ message: 'Akun admin berhasil dihapus' });
-    } catch (error) {
-        res.status(500).json({ message: 'Gagal menghapus akun', error: error.message });
-    }
+
+/**
+ * Daftar Users
+ */
+export const getDaftarUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+
+    res.status(200).json({
+      message: "Berhasil mengambil daftar pengguna",
+      data: users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil daftar pengguna",
+      error: error.message,
+    });
+  }
 };
 
-// Approval pengaduan
-export const approvePengaduan = async (req, res) => {
-    const { id } = req.params;
-    const { status, catatan } = req.body;
-    try {
-        const pengaduan = await Pengaduan.findByIdAndUpdate(id, { status, catatan }, { new: true });
-        if (!pengaduan) {
-            return res.status(404).json({ message: 'Pengaduan tidak ditemukan' });
-        }
-        res.status(200).json({ message: 'Status approval berhasil diperbarui', data: pengaduan });
-    } catch (error) {
-        res.status(400).json({ message: 'Gagal memperbarui status approval', error: error.message });
-    }
+
+/**
+ * Semua pengaduan
+ */
+export const getSemuaPengaduan = async (req, res) => {
+  try {
+    const semuaPengaduan = await prisma.pengaduan.findMany({
+      include: { kategori: true, user: true },
+    });
+
+    res.status(200).json({
+      message: "Berhasil mengambil semua pengaduan",
+      data: semuaPengaduan,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal mengambil pengaduan",
+      error: error.message,
+    });
+  }
+};
+
+export default {
+  getStatistikSistem,
+  getStatistikPengaduan,
+  getDaftarAdmin,
+  getDaftarUsers,
+  getSemuaPengaduan
 };

@@ -1,29 +1,48 @@
-import jwt from 'jsonwebtoken';
-import { promisify } from 'util';
-import User from '../models/userModel.js';
-import config from '../config/index.js';
+import jwt from "jsonwebtoken";
+import prisma from "../utils/prisma.js";
+import config from "../config/index.js";
 
-export const authenticate = async (req, res, next) => {
-    try {
-        const header = req.headers.authorization || '';
-        const token = header.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
+export default async function authMiddleware(req, res, next) {
+  try {
+    const header = req.headers.authorization;
 
-        const decoded = await promisify(jwt.verify)(token, config.JWT_SECRET);
-        req.user = await User.findById(decoded.id);
-        if (!req.user) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-
-        next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Unauthorized' });
+    if (!header || !header.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized. Token missing." });
     }
-};
 
-// Backwards-compatible alias used in some files
-export const authMiddleware = authenticate;
+    const token = header.split(" ")[1];
+    const decoded = jwt.verify(token, config.JWT_SECRET);
 
-export default authenticate;
+    console.log("DECODED TOKEN:", decoded);
+
+    let user;
+
+    if (
+      decoded.role === "admin" ||
+      decoded.role === "master_admin" ||
+      decoded.role === "pimpinan" 
+    ) {
+      // Cari di tabel ADMIN
+      user = await prisma.admin.findUnique({
+        where: { id: decoded.id },
+      });
+    } else {
+      // Cari di tabel USER (Masyarakat)
+      user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+      });
+    }
+
+    if (!user) {
+      console.error("❌ User not found in DB for ID:", decoded.id, "Role:", decoded.role);
+      return res.status(401).json({ message: "Unauthorized. User not found." });
+    }
+    req.user = user;
+    req.user.role = decoded.role; 
+
+    next();
+  } catch (err) {
+    console.error("TOKEN ERROR:", err.message);
+    return res.status(401).json({ message: "Unauthorized. Invalid token." });
+  }
+}

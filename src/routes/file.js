@@ -1,12 +1,14 @@
 import express from 'express';
+import authMiddleware from '../middlewares/authMiddleware.js';
+import upload from '../utils/fileStorage.js';
+import * as fileController from '../controllers/fileController.js';
+
 const router = express.Router();
-import fileController from '../controllers/fileController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
 
-// Upload file attachment for a specific complaint
-router.post('/:id/lampiran', authMiddleware, fileController);
+// Upload file lampiran
+router.post('/pengaduan/:id/lampiran', authMiddleware, upload.single('lampiran'), fileController.uploadLampiran);
 
-// Download a specific file attachment
-router.get('/:id/lampiran/:fileId', authMiddleware, fileController);
+// Download file lampiran
+router.get('/pengaduan/:id/lampiran/:fileId', authMiddleware, fileController.downloadLampiran);
 
 export default router;

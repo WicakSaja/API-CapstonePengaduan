@@ -1,12 +1,20 @@
+// src/routes/dashboard.js
+
 import express from 'express';
 const router = express.Router();
-import * as dashboardController from '../controllers/dashboardController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
 
-// Route to get statistics for admins
-router.get('/statistik-laporan', authMiddleware, dashboardController.getStatistics);
+// 1. Impor HANYA 'getStatistics' secara spesifik
+import { getStatistics } from '../controllers/dashboardController.js';
+import authMiddleware from '../middlewares/authMiddleware.js';
 
-// Route to get system statistics for master admins
-router.get('/statistik-sistem', authMiddleware, dashboardController.getSystemStatistics);
+// 2. Gunakan 'getStatistics' SECARA LANGSUNG (tanpa 'dashboardController.')
+router.get(
+    '/statistik-laporan', 
+    authMiddleware, 
+    getStatistics // <-- PERBAIKAN DI SINI
+);
+
+// 3. Rute '/statistik-sistem' DIHAPUS dari file ini
+//    karena frontend mencarinya di prefix yang berbeda.
 
 export default router;

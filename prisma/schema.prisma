@@ -1,17 +1,77 @@
-// Prisma schema generated from existing Mongoose models (starting point).
-// Review types and relations, then run `npx prisma migrate dev --name init` or
-// `npx prisma db push` and `npx prisma generate` locally.
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+enum RoleAdmin {
+  admin
+  master_admin
+  pimpinan
 }
 
-model User {
+enum StatusPengaduan {
+  pending       // <-- Default
+  diterima
+  diproses
+  ditolak
+  dilaksanakan
+  selesai
+}
+
+model admin {
+  id           Int          @id @default(autoincrement())
+  nama_lengkap String
+  username     String       @unique
+  password     String
+  role         RoleAdmin    @default(admin)
+  createdAt    DateTime     @default(now())
+  pengumuman   Pengumuman[]
+}
+
+model kategori {
+  id            Int         @id @default(autoincrement())
+  nama_kategori String      @unique
+  deskripsi     String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  pengaduan     pengaduan[]
+}
+
+model lampiran {
+  id          Int       @id @default(autoincrement())
+  pengaduanId Int
+  filePath    String
+  createdAt   DateTime  @default(now())
+  pengaduan   pengaduan @relation(fields: [pengaduanId], references: [id])
+
+  @@index([pengaduanId])
+}
+
+model pengaduan {
+  id         Int      @id @default(autoincrement())
+  kategoriId Int
+  userId     Int?
+  judul      String
+  deskripsi  String
+  lokasi     String
+
+  status     StatusPengaduan @default(pending) // <-- Default 'pending'
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  lampiran   lampiran[]
+  kategori   kategori   @relation(fields: [kategoriId], references: [id])
+  user       user?      @relation(fields: [userId], references: [id])
+
+  @@index([kategoriId])
+  @@index([userId])
+}
+
+model user {
   id           Int         @id @default(autoincrement())
   nama_lengkap String
   nik          String      @unique
@@ -19,48 +79,17 @@ model User {
   alamat       String
   username     String      @unique
   password     String
-  pengaduans   Pengaduan[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  pengaduan    pengaduan[]
 }
 
-model Admin {
+model Pengumuman {
   id         Int      @id @default(autoincrement())
-  nama_lengkap String
-  username   String   @unique
-  password   String
-  createdAt  DateTime @default(now())
-}
-
-model Kategori {
-  id           Int         @id @default(autoincrement())
-  nama_kategori String      @unique
-  deskripsi    String
-  pengaduans   Pengaduan[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-}
-
-model Pengaduan {
-  id         Int       @id @default(autoincrement())
-  kategori   Kategori  @relation(fields: [kategoriId], references: [id])
-  kategoriId Int
-  user       User?     @relation(fields: [userId], references: [id])
-  userId     Int?
   judul      String
-  deskripsi  String
-  lokasi     String
-  status     String    @default("pending")
-  lampiran   Lampiran[]
-  // tanggapan omitted (no model in repo)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
-
-model Lampiran {
-  id          Int       @id @default(autoincrement())
-  pengaduan   Pengaduan @relation(fields: [pengaduanId], references: [id])
-  pengaduanId Int
-  filePath    String
-  createdAt   DateTime  @default(now())
+  isi        String
+  gambar     String?
+  dibuatPada DateTime @default(now())
+  dibuatOleh Int
+  admin      admin    @relation(fields: [dibuatOleh], references: [id])
 }

@@ -3,17 +3,24 @@ import kategoriService from '../services/kategoriService.js';
 export const getAllCategories = async (req, res) => {
     try {
         const categories = await kategoriService.getAllCategories();
+
         res.status(200).json({
+            success: true,
             message: 'Berhasil mengambil daftar kategori',
-            data: categories,
+            data: {
+                kategori: categories
+            }
         });
+
     } catch (error) {
         res.status(500).json({
+            success: false,
             message: 'Gagal mengambil daftar kategori',
             errors: error.message,
         });
     }
 };
+
 
 export const createCategory = async (req, res) => {
     try {
@@ -47,16 +54,18 @@ export const updateCategory = async (req, res) => {
 };
 
 export const deleteCategory = async (req, res) => {
-    const { id } = req.params;
     try {
-        await kategoriService.deleteCategory(id);
-        res.status(200).json({
-            message: 'Kategori berhasil dihapus',
+        await kategoriService.deleteCategory(req.params.id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Kategori berhasil dihapus"
         });
+
     } catch (error) {
-        res.status(404).json({
-            message: 'Kategori tidak ditemukan',
-            errors: error.message,
+        return res.status(404).json({
+            success: false,
+            message: "Kategori tidak ditemukan"
         });
     }
 };

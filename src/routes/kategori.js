@@ -3,21 +3,34 @@ const router = express.Router();
 import * as kategoriController from '../controllers/kategoriController.js';
 import middlewares from '../middlewares/index.js';
 
-const _notImplemented = (req, res) => res.status(501).json({ message: 'Not implemented' });
-
-// Get all categories
+// GET semua kategori
 router.get('/', kategoriController.getAllCategories);
 
-// Create a new category
-router.post('/', middlewares.authMiddleware, middlewares.roleMiddleware(['admin', 'master']), kategoriController.createCategory);
+// GET kategori by ID  <-- ROUTE INI SANGAT PENTING !!
+router.get('/:id', kategoriController.getCategoryById);
 
-// Get category details
-router.get('/:id', middlewares.authMiddleware, middlewares.roleMiddleware(['admin', 'master']), kategoriController.getCategoryById?.bind?.(kategoriController) || _notImplemented);
+// CREATE kategori
+router.post(
+    '/',
+    middlewares.authMiddleware,
+    middlewares.roleMiddleware(['admin', 'master_admin']),
+    kategoriController.createCategory
+);
 
-// Update a category
-router.put('/:id', middlewares.authMiddleware, middlewares.roleMiddleware(['admin', 'master']), kategoriController.updateCategory);
+// UPDATE kategori
+router.put(
+    '/:id',
+    middlewares.authMiddleware,
+    middlewares.roleMiddleware(['admin', 'master_admin']),
+    kategoriController.updateCategory
+);
 
-// Delete a category
-router.delete('/:id', middlewares.authMiddleware, middlewares.roleMiddleware(['admin', 'master']), kategoriController.deleteCategory);
+// DELETE kategori
+router.delete(
+    '/:id',
+    middlewares.authMiddleware,
+    middlewares.roleMiddleware(['admin', 'master_admin']),
+    kategoriController.deleteCategory
+);
 
 export default router;

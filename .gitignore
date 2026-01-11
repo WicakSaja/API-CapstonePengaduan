@@ -1,2 +1,15 @@
-node_modules
+﻿# Node
+node_modules/
+
+# Environment
 .env
+
+# prisma artifacts
+/prisma/migrations/
+
+# local system files
+.vscode/
+
+uploads/
+
+public/uploads/

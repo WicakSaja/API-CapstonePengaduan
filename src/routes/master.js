@@ -1,21 +1,44 @@
-import express from 'express';
+import express from "express";
+import masterController from "../controllers/masterController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import roleMiddleware from "../middlewares/roleMiddleware.js";
+
 const router = express.Router();
-import * as masterController from '../controllers/masterController.js';
-import middlewares from '../middlewares/index.js';
 
-// Route to get all admin accounts
-router.get('/admin', middlewares.authMiddleware, middlewares.roleMiddleware('masterAdmin'), masterController.getAllAdmins);
+// Master Admin Only
+router.get(
+  "/dashboard/statistik-sistem",
+  authMiddleware,
+  roleMiddleware(["master_admin"]),
+  masterController.getStatistikSistem
+);
 
-// Route to create a new admin account
-router.post('/admin', middlewares.authMiddleware, middlewares.roleMiddleware('masterAdmin'), masterController.createAdmin);
+router.get(
+  "/dashboard/statistik-pengaduan",
+  authMiddleware,
+  roleMiddleware(["admin", "master_admin"]),
+  masterController.getStatistikPengaduan
+);
 
-// Route to update an admin account
-router.put('/admin/:id', middlewares.authMiddleware, middlewares.roleMiddleware('masterAdmin'), masterController.updateAdmin);
+router.get(
+  "/admin/list",
+  authMiddleware,
+  roleMiddleware(["master_admin"]),
+  masterController.getDaftarAdmin
+);
 
-// Route to delete an admin account
-router.delete('/admin/:id', middlewares.authMiddleware, middlewares.roleMiddleware('masterAdmin'), masterController.deleteAdmin);
+router.get(
+  "/users/list",
+  authMiddleware,
+  roleMiddleware(["master_admin"]),
+  masterController.getDaftarUsers
+);
 
-// Route to approve a complaint
-router.patch('/pengaduan/:id/approval', middlewares.authMiddleware, middlewares.roleMiddleware('masterAdmin'), masterController.approvePengaduan);
+router.get(
+  "/pengaduan/all",
+  authMiddleware,
+  roleMiddleware(["master_admin"]),
+  masterController.getSemuaPengaduan
+);
 
 export default router;

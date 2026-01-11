@@ -1,27 +1,33 @@
 import express from 'express';
+import multer from 'multer';
+import authMiddleware from '../middlewares/authMiddleware.js';
+
+import {
+  createPengaduan,
+  getPengaduanSaya,
+  getPengaduanDetail,
+  uploadLampiran,
+  getLampiranByPengaduan,
+  downloadLampiran,
+  deleteLampiran,
+} from '../controllers/pengaduanController.js';
+
 const router = express.Router();
-import * as pengaduanController from '../controllers/pengaduanController.js';
-import { authMiddleware, authenticate } from '../middlewares/authMiddleware.js';
-import pengaduanValidators from '../validators/pengaduanValidators.js';
 
-const _notImplemented = (req, res) => res.status(501).json({ message: 'Not implemented' });
+// Konfigurasi upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+});
+const upload = multer({ storage });
 
-// Route to submit a new complaint
-router.post('/', authMiddleware, pengaduanValidators.createPengaduan, pengaduanController.createPengaduan);
+router.post('/', authMiddleware, createPengaduan);
+router.get('/me', authMiddleware, getPengaduanSaya);
+router.get('/:id', authMiddleware, getPengaduanDetail);
 
-// Route to get the user's complaint history
-router.get('/saya', authMiddleware, pengaduanController.getPengaduanSaya);
-
-// Route to get details of a specific complaint
-router.get('/saya/:id', authMiddleware, pengaduanController.getPengaduanDetail);
-
-// Route to get responses for a specific complaint
-router.get('/:id/tanggapan', authMiddleware, pengaduanController.getTanggapanPengaduan?.bind?.(pengaduanController) || _notImplemented);
-
-// Route to upload an attachment for a complaint
-router.post('/:id/lampiran', authMiddleware, pengaduanController.uploadLampiran?.bind?.(pengaduanController) || _notImplemented);
-
-// Route to download a specific attachment
-router.get('/:id/lampiran/:fileId', authMiddleware, pengaduanController.downloadLampiran?.bind?.(pengaduanController) || _notImplemented);
+router.post('/:id/lampiran', authMiddleware, upload.single('lampiran'), uploadLampiran);
+router.get('/:id/lampiran', authMiddleware, getLampiranByPengaduan);
+router.get('/lampiran/:lampiranId/download', authMiddleware, downloadLampiran);
+router.delete('/lampiran/:lampiranId', authMiddleware, deleteLampiran);
 
 export default router;
