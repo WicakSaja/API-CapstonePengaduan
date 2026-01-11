@@ -18,7 +18,13 @@ import pengumumanRoute from "./routes/pengumumanRoute.js";
 import prisma from "./utils/prisma.js";
 import config from "./config/index.js";
 
+import swaggerUi from "swagger-ui-express";
+import swaggerDocument from "./docs/api-specs.json" with { type: "json" };
+
+
 const app = express();
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
 app.use(express.json());
