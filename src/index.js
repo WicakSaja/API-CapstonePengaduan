@@ -27,34 +27,13 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/uploads/:filename", (req, res) => {
   const rawFilename = req.params.filename;
   const decodedFilename = decodeURIComponent(rawFilename); 
-
-  console.log("\n--- DEBUG REQUEST GAMBAR ---");
-  console.log("1. URL Request:", rawFilename);
-  console.log("2. Nama File Asli:", decodedFilename);
-
-  // Cek Path Public
-  const pathPublic = path.join(process.cwd(), "public", "uploads", decodedFilename);
-  const existPublic = fs.existsSync(pathPublic);
-  console.log(`3. Cek di Public: ${pathPublic}`);
-  console.log(`   > Status: ${existPublic ? " ADA" : " TIDAK ADA"}`);
-
-  if (existPublic) {
-    return res.sendFile(pathPublic);
-  }
   const pathRoot = path.join(process.cwd(), "uploads", decodedFilename);
   const existRoot = fs.existsSync(pathRoot);
-  console.log(`4. Cek di Root:   ${pathRoot}`);
-  console.log(`   > Status: ${existRoot ? " ADA" : " TIDAK ADA"}`);
 
   if (existRoot) {
     return res.sendFile(pathRoot);
   }
-
-  console.log("---------------------------------\n");
-  return res.status(404).send("File tidak ditemukan di server (Cek Terminal).");
 });
-
-
 
 app.use(express.static(path.join(process.cwd(), "public")));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads"))); 

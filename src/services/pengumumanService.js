@@ -1,12 +1,5 @@
 import prisma from "../utils/prisma.js";
 export const createPengumuman = async (data, adminId) => {
-  console.log("🟢 CREATE:", {
-    judul: data.judul,
-    isi: data.isi,
-    gambar: data.gambar,
-    adminId,
-  });
-
   return prisma.pengumuman.create({
     data: {
       judul: data.judul,

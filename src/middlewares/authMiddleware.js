@@ -13,8 +13,6 @@ export default async function authMiddleware(req, res, next) {
     const token = header.split(" ")[1];
     const decoded = jwt.verify(token, config.JWT_SECRET);
 
-    console.log("DECODED TOKEN:", decoded);
-
     let user;
 
     if (

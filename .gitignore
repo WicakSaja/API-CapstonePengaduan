@@ -5,7 +5,7 @@ node_modules/
 .env
 
 # prisma artifacts
-/prisma/migrations/
+prisma/migrations/
 
 # local system files
 .vscode/
