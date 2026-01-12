@@ -51,10 +51,19 @@ router.put(
   "/:id",
   authMiddleware,
   roleMiddleware(["admin", "master_admin"]),
+  upload.single("gambar"), 
   async (req, res) => {
+    const data = {
+      judul: req.body?.judul,
+      isi: req.body?.isi,
+      gambar: req.file ? req.file.filename : undefined,
+    };
+
+    const result = await updatePengumuman(req.params.id, data);
+
     res.json({
       success: true,
-      data: await updatePengumuman(req.params.id, req.body),
+      data: result,
     });
   }
 );
