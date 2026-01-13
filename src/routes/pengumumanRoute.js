@@ -56,7 +56,7 @@ router.put(
     const data = {
       judul: req.body?.judul,
       isi: req.body?.isi,
-      gambar: req.file ? req.file.filename : undefined,
+      gambar: req.file ? `/uploads/${req.file.filename}` : undefined,
     };
 
     const result = await updatePengumuman(req.params.id, data);
